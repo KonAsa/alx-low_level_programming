@@ -1,13 +1,35 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 /**
- * main - Entry point
- *
- * Return: Always 0 (Success)
+ * main - program that generates random valid
+ * password for the program 101-crackme
+ * Return: Always 0 (success)
  */
 int main(void)
 {
+        int pass[100];
+        int i, sum, n;
 
-	return (0);
+        sum = 0;
+
+        srand(time(NULL));
+
+        for (i = 0; i < 100; i++)
+        {
+                pass[i] = rand() % 78; // generate a random number between 0 and 77
+                sum += pass[i];
+                putchar(pass[i] + '0'); // print the character corresponding to the ASCII code of the digit
+                if ((2772 - sum) < 78) // if the remaining sum is less than 78, exit the loop
+                {
+                        n = 2772 - sum;
+                        sum += n;
+                        putchar(n + '0');
+                        break;
+                }
+        }
+
+        return (0);
 }
 
