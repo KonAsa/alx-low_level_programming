@@ -1,29 +1,41 @@
-#include <stdio.h>
-#include <string.h>
+#include "main.h"
 
+/**
+ * wildcmp - Compares two strings, taking wildcard characters into account
+ *
+ * @s1: The first string to compare
+ * @s2: The second string to compare
+ *
+ * Return: 1 if the strings can be considered identical, otherwise 0.
+ */
 int wildcmp(char *s1, char *s2)
 {
-    /* Base case: both strings are empty */
-    if (*s1 == '\0' && *s2 == '\0')
-        return 1;
-
-    /* If the current character in s2 is a wildcard, recursively check all possible matches */
-    if (*s2 == '*') {
-        /* Check all possible matches starting from the current position in s1 */
-        while (*s1 != '\0') {
-            if (wildcmp(s1, s2 + 1))
-                return 1;
-            s1++;
+    if (*s2 == '*')
+    {
+        if (*(s2 + 1) == '*')
+        {
+            return (wildcmp(s1, s2 + 1));
         }
-        /* If no match is found, return 0 */
-        return 0;
+        else if (wildcmp(s1, s2 + 1))
+        {
+            return (1);
+        }
+        else
+        {
+            return (wildcmp(s1 + 1, s2));
+        }
     }
 
-    /* If the current characters in s1 and s2 match or the current character in s2 is '?', move to the next character */
-    if (*s1 == *s2 || *s2 == '?')
-        return wildcmp(s1 + 1, s2 + 1);
+    if (*s1 != *s2)
+    {
+        return (0);
+    }
 
-    /* If none of the above conditions are met, return 0 */
-    return 0;
+    if (*s1 == '\0' && *s2 == '\0')
+    {
+        return (1);
+    }
+
+    return (wildcmp(s1 + 1, s2 + 1));
 }
 
