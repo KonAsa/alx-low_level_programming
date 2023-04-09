@@ -1,66 +1,80 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include "main.h"
+
+#define BUF_SIZE 1024
 
 /**
- * error - prints an error message to stderr and exits with a given code
- * @msg: the error message format string
- * @arg: the argument for the format string
- * @code: the exit code
+ * print_error - prints an error message and exits with the given code
+ * @code: exit code
+ * @msg: error message
+ * @arg: argument to include in the error message
  */
-void error(char *msg, char *arg, int code)
+void print_error(int code, const char *msg, const char *arg)
 {
-	fprintf(stderr, "Error: ");
-	fprintf(stderr, msg, arg);
-	fprintf(stderr, "\n");
+	dprintf(STDERR_FILENO, msg, arg);
 	exit(code);
 }
 
 /**
- * copy_file - copies the contents of one file to another file
- * @src: the path to the source file
- * @dst: the path to the destination file
+ * open_file - opens a file with the given mode
+ * @filename: file to open
+ * @mode: file mode
+ * @code: exit code to use in case of error
+ *
+ * Return: file descriptor
  */
-void copy_file(char *src, char *dst)
+int open_file(const char *filename, int mode, int code)
 {
-	int fd1, fd2, r, w;
-	char buf[1024];
+	int fd = open(filename, mode);
 
-	fd1 = open(src, O_RDONLY);
-	if (fd1 < 0)
-		error("Can't read from file %s", src, 98);
+	if (fd == -1)
+		print_error(code, "Error: Can't open file %s\n", filename);
 
-	fd2 = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0664);
-	if (fd2 < 0)
-		error("Can't write to %s", dst, 99);
-
-	while ((r = read(fd1, buf, 1024)) > 0)
-	{
-		w = write(fd2, buf, r);
-		if (w < 0)
-			error("Can't write to %s", dst, 99);
-	}
-	if (r < 0)
-		error("Can't read from file %s", src, 98);
-
-	close(fd1);
-	close(fd2);
+	return (fd);
 }
 
 /**
- * main - entry point of the program
- * @argc: the number of arguments
- * @argv: an array of strings representing the arguments
+ * copy_file - copies the contents of one file to another
+ * @src: source file
+ * @dest: destination file
+ */
+void copy_file(const char *src, const char *dest)
+{
+	char buf[BUF_SIZE];
+	ssize_t bytes_read, bytes_written;
+	int fd_src, fd_dest;
+
+	fd_src = open_file(src, O_RDONLY, 98);
+	fd_dest = open_file(dest, O_WRONLY | O_CREAT | O_TRUNC, 99);
+
+	while ((bytes_read = read(fd_src, buf, BUF_SIZE)) > 0)
+	{
+		bytes_written = write(fd_dest, buf, bytes_read);
+
+		if (bytes_written == -1)
+			print_error(99, "Error: Can't write to %s\n", dest);
+	}
+
+	if (bytes_read == -1)
+		print_error(98, "Error: Can't read from file %s\n", src);
+
+	if (close(fd_src) == -1)
+		print_error(100, "Error: Can't close fd %d\n", fd_src);
+
+	if (close(fd_dest) == -1)
+		print_error(100, "Error: Can't close fd %d\n", fd_dest);
+}
+
+/**
+ * main - entry point
+ * @argc: argument count
+ * @argv: argument vector
+ *
  * Return: 0 on success, 97-100 on error
  */
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 	if (argc != 3)
-	{
-		fprintf(stderr, "Usage: %s file_from file_to\n", argv[0]);
-		return (97);
-	}
+		print_error(97, "Usage: cp file_from file_to\n", NULL);
 
 	copy_file(argv[1], argv[2]);
 
